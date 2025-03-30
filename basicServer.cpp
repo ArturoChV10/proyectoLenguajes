@@ -84,8 +84,7 @@ int main() {
 
     cout << "Servidor esperando conexiones en el puerto 8080..." << endl;
     /*
-    La idea del doble while fue gpt, tenemos que considerar si es necesario, ya
-    que recurrí en busca de como mantener el servidor abierto para múltiples mensajes
+    Ciclo principal del servidor que acepta conexiones de clientes y crea un proceso hijo por cada cliente para manejarlas.
     */
     while (true) {
         // Aceptar la conexión de un cliente
@@ -97,18 +96,18 @@ int main() {
 
         cout << "Cliente conectado!" << endl;
 
-        // Crear un proceso hijo para manejar al cliente
+        // Con ayuda de gpt se implementa fork(), aqui se crea un proceso hijo para manejar al cliente
         pid_t pid = fork();
 
         if (pid == 0) {
             // Proceso hijo
-            close(serverSocket); // El hijo no necesita el socket del servidor
-            handleClient(clientSocket);
+            close(serverSocket); // El hijo no necesita el socket del servidor ya que no acepta mas conexiones
+            handleClient(clientSocket); // logica de recepción y envío de mensajes al cliente
             return 0; // Termina el hijo después de atender al cliente
 
         } else if (pid > 0) {
             // Proceso padre
-            close(clientSocket); // El padre no atiende directamente al cliente
+            close(clientSocket); // El padre no atiende directamente al cliente, por ende se cierra el socket
 
         } else {
             cerr << "Error al hacer fork()" << endl;

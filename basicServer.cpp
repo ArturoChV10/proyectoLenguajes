@@ -3,9 +3,35 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <cstring>
+#include <signal.h>
 
 using namespace std;
 
+
+void handleClient(int clientSocket) {
+    while (true) {
+        char buffer[1024];
+        memset(buffer, 0, sizeof(buffer));
+
+        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+        if (bytesReceived <= 0) {
+            cout << "Cliente desconectado." << endl;
+            break;
+        }
+
+        cout << "Mensaje del cliente: " << buffer << endl;
+
+        if (strcmp(buffer, "Cerrar") == 0) {
+            cout << "Cerrando conexión con cliente." << endl;
+            break;
+        }
+
+        const char* response = "Mensaje recibido por el servidor";
+        send(clientSocket, response, strlen(response), 0);
+    }
+
+    close(clientSocket);
+}
 int main() {
     // Crear el socket del servidor
     /*
@@ -15,6 +41,8 @@ int main() {
     define un servidor TCP, de manera general se recomienda usar un servidor UDP,
     pero considero que TCP es más simple y encontré más información acerca de
     */
+   signal(SIGCHLD, SIG_IGN);
+
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     // Validación de creación
@@ -58,48 +86,25 @@ int main() {
         }
 
         cout << "Cliente conectado!" << endl;
-        /*
-        Este es el ciclo while que permite enviar N mensajes
-        */
-        while (true) {
-            char buffer[1024];
-            memset(buffer, 0, sizeof(buffer)); // Limpiar el buffer
 
-            // Recibir mensaje del cliente
-            int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0); // recv() es la función que recibe mensajes del cliente
-            if (bytesReceived <= 0) {
-                cout << "Cliente desconectado." << endl;
-                break;
-            }
+        // Crear un proceso hijo para manejar al cliente
+        pid_t pid = fork();
 
-            // Mostrar mensaje recibido
-            cout << "Mensaje del cliente: " << buffer << endl;
+        if (pid == 0) {
+            // Proceso hijo
+            close(serverSocket); // El hijo no necesita el socket del servidor
+            handleClient(clientSocket);
+            return 0; // Termina el hijo después de atender al cliente
 
-            // Verificar si el mensaje es "Cerrar" y terminar el servidor
-            if (strcmp(buffer, "Cerrar") == 0) { //strcmp (string compare)
-                cout << "El servidor se está cerrando..." << endl;
-                close(clientSocket);
-                close(serverSocket);
-                return 0;
-            }
-
-            // Enviar confirmación al cliente
-            const char* response = "Mensaje recibido por el servidor";
-            /*
-            Envia un mensaje al usuario, esto podemos aprovecharlo, enviando un
-            mensaje con la estructura <receptor><-<remiente>:<mensaje>, lo cual
-            nos permite enviar un mensaje a todos los usuarios y luego verificar
-            quien cumple las condiciones para recibirlo (obviamente esto no es
-            para nada eficiente, es como que whatsapp mande el mismo mensaje a
-            2000 millones de personas y luego valide para que solo se muestre a
-            una, pero es una buena manera de cubrir el problema)
-            */
-            send(clientSocket, response, strlen(response), 0);
+        } else if (pid > 0) {
+            // Proceso padre
+            close(clientSocket); // El padre no atiende directamente al cliente
+            
+        } else {
+            cerr << "Error al hacer fork()" << endl;
         }
-
-        // Cerrar la conexión con el cliente y esperar otro
-        close(clientSocket);
     }
 
+    close(serverSocket);
     return 0;
 }

@@ -7,25 +7,35 @@
 
 using namespace std;
 
-
+/*
+ * Función que maneja la comunicación con un cliente específico.
+ * Se ejecuta en un proceso hijo creado por fork().
+ */
 void handleClient(int clientSocket) {
     while (true) {
         char buffer[1024];
-        memset(buffer, 0, sizeof(buffer));
+        memset(buffer, 0, sizeof(buffer)); //limpiar buffer
 
-        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+        // Espera para recibir mensajes del cliente
+        // recv() recibe el mensaje del cliente y lo almacena en el buffer
+        int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0); 
+        // bytesReceived almacena la cantidad de bytes recibidos y sizeof(buffer) - 1 se utiliza para dejar espacio para el terminador nulo
+        // 0 indica que no se está utilizando ninguna bandera especial
         if (bytesReceived <= 0) {
             cout << "Cliente desconectado." << endl;
             break;
         }
 
+        // Muestra el mensaje recibido
         cout << "Mensaje del cliente: " << buffer << endl;
 
+        // Si alguno de los clientes escribe Cerrar, se cierra la conexión
         if (strcmp(buffer, "Cerrar") == 0) {
             cout << "Cerrando conexión con cliente." << endl;
             break;
         }
 
+        // Confirmacion del mensaje recibido
         const char* response = "Mensaje recibido por el servidor";
         send(clientSocket, response, strlen(response), 0);
     }
@@ -41,8 +51,9 @@ int main() {
     define un servidor TCP, de manera general se recomienda usar un servidor UDP,
     pero considero que TCP es más simple y encontré más información acerca de
     */
-   signal(SIGCHLD, SIG_IGN);
+   signal(SIGCHLD, SIG_IGN); // Ignorar señales de procesos hijos terminados
 
+   // Crear el socket del servidor
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     // Validación de creación
@@ -78,7 +89,6 @@ int main() {
     */
     while (true) {
         // Aceptar la conexión de un cliente
-        // Esto tenemos que verlo, porque debe aceptar a N clientes
         int clientSocket = accept(serverSocket, nullptr, nullptr);
         if (clientSocket == -1) {
             cerr << "Error al aceptar conexión" << endl;
@@ -99,7 +109,7 @@ int main() {
         } else if (pid > 0) {
             // Proceso padre
             close(clientSocket); // El padre no atiende directamente al cliente
-            
+
         } else {
             cerr << "Error al hacer fork()" << endl;
         }

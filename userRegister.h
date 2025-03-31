@@ -104,7 +104,7 @@ int registerUser(){
     return 1;
 }
 
-bool LoginUser(string username, string password) {
+bool loginUser(string username, string password) {
     //recibe un usuario y contraseña, retorna true si el usuario y contraseña coinicen, retorna false si no coinciden el usuario y la contraseña
     ifstream file("users.txt");
     string line, storedUser, storedPass;

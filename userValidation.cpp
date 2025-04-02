@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
 
-int const arraySize = 5;
-
 using namespace std;
+
+// Tamaño del array de usuarios
+const int arraySize = 5;
 
 struct user {
 	int ID;

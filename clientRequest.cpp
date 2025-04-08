@@ -10,7 +10,7 @@
 using namespace std;
 
 // Función para recibir mensajes del servidor
-void receiveMessages(int clientSocket) {
+void receiveMessages(int clientSocket, string registeredUserName) {
     while (true) {
         char buffer[1024];
         memset(buffer, 0, sizeof(buffer));
@@ -22,7 +22,17 @@ void receiveMessages(int clientSocket) {
             cout << "El servidor ha cerrado la conexión." << endl;
             break;
         } else {
-            cout << "\n" << "Servidor: " << buffer << endl;
+	        string validate = "";
+	        for (int index = 0; index < bytesReceived; index++) { 
+		        validate = validate + buffer[index];
+	        }
+            size_t start = validate.find("TO ");
+            size_t end = validate.find(": ");
+            string user = validate.substr(start + 3, (end + 1) - (start + 4));
+             
+            if(user == registeredUserName) {
+                cout << "\n" << buffer << endl;
+            }
         }
     }
 
@@ -59,9 +69,6 @@ int main() {
 
     cout << "Conectado al servidor" << endl;
 
-    // Crear un hilo para recibir mensajes del servidor
-    thread receiveThread(receiveMessages, clientSocket);
-
     //registro de usuarios nuevos
     string opc;
     cout << "Desea crear una cuenta nueva? (y/n)";
@@ -80,6 +87,9 @@ int main() {
         cout << endl << "Ingrese su contraseña: ";
         getline(cin, passw);
     } while (!loginUser(username, passw));
+
+    // Crear un hilo para recibir mensajes del servidor
+    thread receiveThread(receiveMessages, clientSocket, username);
 
 
     // Bucle para enviar mensajes al servidor

@@ -1,5 +1,5 @@
-/* Fernando Sánchez Hidalgo - 2022218688
-* Lenguajes de programación S1.2025
+/* Fernando Sï¿½nchez Hidalgo - 2022218688
+* Lenguajes de programaciï¿½n S1.2025
 */
 
 #ifndef USERREGISTER_H
@@ -12,14 +12,14 @@
 
 using namespace std;
 
-// Declaración de funciones
+// Declaraciï¿½n de funciones
 bool validateUser(string username);
 bool validatePassword(string pass);
 int saveFile(string username, string password);
 int registerUser();
 bool LoginUser(string username, string password);
 
-// Definición de funciones
+// Definiciï¿½n de funciones
 
 /* valida que el nombre de usuario no exista en la base de datos */
 bool validateUser(string username) {
@@ -28,7 +28,7 @@ bool validateUser(string username) {
 
     if (file.is_open()) {
         while (getline(file, line)) {
-            size_t pos = line.find(";"); // encuentra el ; que separa usuario;contraseña
+            size_t pos = line.find(";"); // encuentra el ; que separa usuario;contraseï¿½a
             if (pos != string::npos) {
                 storedUser = line.substr(0, pos); // obtiene el nombre de usuario
                 if (storedUser == username) {
@@ -42,7 +42,7 @@ bool validateUser(string username) {
     return true;
 }
 
-/* valida que la contraseña sea de al menos 8 caracteres, contenga una mayuscula y un digito */
+/* valida que la contraseï¿½a sea de al menos 8 caracteres, contenga una mayuscula y un digito */
 bool validatePassword(string pass){
     bool isLong = true;
     if (pass.length() < 8) {
@@ -63,7 +63,7 @@ bool validatePassword(string pass){
     return isLong && hasUpper && hasDigit; // si alguno da falso, la funcion retorna falso
 }
 
-/* guarda el registro en users.txt en el formato usuario;contraseña. La contraseña es guardada hasheada */
+/* guarda el registro en users.txt en el formato usuario;contraseï¿½a. La contraseï¿½a es guardada hasheada */
 int saveFile(string username, string password){
     
     ofstream file("users.txt", ios::app); 
@@ -108,12 +108,12 @@ int registerUser(){
 
 /* Compara los parametros con el archivo de usuarios */
 bool loginUser(string username, string password) {
-    //recibe un usuario y contraseña, retorna true si el usuario y contraseña coinicen, retorna false si no coinciden el usuario y la contraseña
+    //recibe un usuario y contraseï¿½a, retorna true si el usuario y contraseï¿½a coinicen, retorna false si no coinciden el usuario y la contraseï¿½a
     ifstream file("users.txt");
     string line, storedUser, storedPass;
 
     hash<string> hasher;
-    string hPassword = to_string(hasher(password)); //hashea la contraseña ingresada para comparar con la contraseña guardada
+    string hPassword = to_string(hasher(password)); //hashea la contraseï¿½a ingresada para comparar con la contraseï¿½a guardada
 
     if (file.is_open()) {
         while (getline(file, line)) {
@@ -130,7 +130,7 @@ bool loginUser(string username, string password) {
         }
         file.close();
     }
-    cout << "Nombre de usuario o contraseña incorrectos. \n";
+    cout << "Nombre de usuario o contraseï¿½a incorrectos. \n";
     return false;
 }
 
@@ -141,7 +141,7 @@ bool userExists(string username) {
 
     if (file.is_open()) {
         while (getline(file, line)) {
-            size_t pos = line.find(";"); // encuentra el ; que separa usuario;contraseña
+            size_t pos = line.find(";"); // encuentra el ; que separa usuario;contraseï¿½a
             if (pos != string::npos) {
                 storedUser = line.substr(0, pos); // obtiene el nombre de usuario
                 if (storedUser == username) {
@@ -155,8 +155,4 @@ bool userExists(string username) {
     return false;
 }
 
-
-void main() {
-    registerUser();
-}
 #endif

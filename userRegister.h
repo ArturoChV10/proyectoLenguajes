@@ -20,8 +20,9 @@ int registerUser();
 bool LoginUser(string username, string password);
 
 // Definición de funciones
+
+/* valida que el nombre de usuario no exista en la base de datos */
 bool validateUser(string username) {
-    //valida que el nombre de usuario no exista en la base de datos
     ifstream file("users.txt");
     string line, storedUser;
 
@@ -41,8 +42,8 @@ bool validateUser(string username) {
     return true;
 }
 
+/* valida que la contraseña sea de al menos 8 caracteres, contenga una mayuscula y un digito */
 bool validatePassword(string pass){
-    // valida que la contraseña sea de al menos 8 caracteres, contenga una mayuscula y un digito
     bool isLong = true;
     if (pass.length() < 8) {
         isLong =  false;
@@ -62,8 +63,9 @@ bool validatePassword(string pass){
     return isLong && hasUpper && hasDigit; // si alguno da falso, la funcion retorna falso
 }
 
+/* guarda el registro en users.txt en el formato usuario;contraseña. La contraseña es guardada hasheada */
 int saveFile(string username, string password){
-    //guarda el registro en users.txt en el formato usuario;contraseña. La contraseña es guardada hasheada
+    
     ofstream file("users.txt", ios::app); 
 
     hash<string> hasher;
@@ -104,6 +106,7 @@ int registerUser(){
     return 1;
 }
 
+/* Compara los parametros con el archivo de usuarios */
 bool loginUser(string username, string password) {
     //recibe un usuario y contraseña, retorna true si el usuario y contraseña coinicen, retorna false si no coinciden el usuario y la contraseña
     ifstream file("users.txt");
@@ -131,4 +134,29 @@ bool loginUser(string username, string password) {
     return false;
 }
 
+/* Valida que el usuario ingresado exista en la BD*/
+bool userExists(string username) {
+    ifstream file("users.txt");
+    string line, storedUser;
+
+    if (file.is_open()) {
+        while (getline(file, line)) {
+            size_t pos = line.find(";"); // encuentra el ; que separa usuario;contraseña
+            if (pos != string::npos) {
+                storedUser = line.substr(0, pos); // obtiene el nombre de usuario
+                if (storedUser == username) {
+                    return true;
+                }
+            }
+        }
+        file.close();
+    }
+    cout << "Usuario no encontrado, intentelo de nuevo \n";
+    return false;
+}
+
+
+void main() {
+    registerUser();
+}
 #endif

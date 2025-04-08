@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <thread>
+#include "userRegister.h"
 
 using namespace std;
 
@@ -61,17 +62,34 @@ int main() {
     // Crear un hilo para recibir mensajes del servidor
     thread receiveThread(receiveMessages, clientSocket);
 
-    // Pedir nombre de usuario
+    //registro de usuarios nuevos
+    string opc;
+    cout << "Desea crear una cuenta nueva? (y/n)";
+    getline(cin, opc);
+    if (opc == "y" || opc == "Y") {
+        registerUser();
+    }
+
+    // login de un usuario
     string username;
-    cout << "Ingrese su nombre de usuario: ";
-    getline(cin, username);
+    string passw;
+    do {
+        cout << endl << "Ingrese su nombre de usuario: ";
+        getline(cin, username);
+
+        cout << endl << "Ingrese su contraseña: ";
+        getline(cin, passw);
+    } while (!loginUser(username, passw));
+
 
     // Bucle para enviar mensajes al servidor
     while (true) {
         // Almacena el nombre de usuario del usuario al que desea enviar mensaje
         string receiver;
-        cout << "Receptor del mensaje: ";
-        getline(cin, receiver);
+        do {
+            cout << "Receptor del mensaje: ";
+            getline(cin, receiver);
+        } while (!userExists(receiver));
 
         // Almacena el mensaje que se desea enviar
         string message;

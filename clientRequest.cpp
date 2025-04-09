@@ -36,7 +36,7 @@ void receiveMessages(int clientSocket, string registeredUserName) {
             string user = validate.substr(start + 3, (end + 1) - (start + 4));
              
             if(user == registeredUserName) {
-                cout << COLOR_RECEIVED << "Mensaje recibido de " << validate.substr(0, start) << ": " << validate.substr(end + 2) << COLOR_RESET << endl;
+                cout << COLOR_RECEIVED << "\n" << "Mensaje recibido de " << validate.substr(0, start) << ": " << validate.substr(end + 2) << COLOR_RESET << endl;
             }
         }
     }

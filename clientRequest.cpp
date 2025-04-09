@@ -47,6 +47,13 @@ void receiveMessages(int clientSocket, string registeredUserName) {
 
 int main() {
     // Crear el socket del cliente
+     /*
+     Para crear un socket se utiliza socket(), los parámetros que se pasaron 
+     tienen diferentes funcionalidades AF_INET especifica que se utilizará el
+     protocolo IPv4 (para conexiones de dispositivos con internet), y SOCK_STREAM
+     define un servidor TCP, de manera general se recomienda usar un servidor UDP,
+     pero considero que TCP es más simple y encontré más información acerca de
+     */
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1) {
         cerr << "Error al crear el socket del cliente" << endl;
@@ -54,12 +61,12 @@ int main() {
     }
 
     // Configurar la dirección del servidor
-    sockaddr_in serverAddress;
+    sockaddr_in serverAddress; // sockaddr_in tipo de dato para guardar direcciones de sockets (socket address in)
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080); // Puerto del servidor
 
     // Convertir la IP del servidor
-    if (inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, "127.0.0.1", &serverAddress.sin_addr) <= 0) { // inet_pton convierte una dirección IPv4 es texto
         cerr << "Dirección IP no válida o no compatible" << endl;
         close(clientSocket);
         return 1;
@@ -98,7 +105,7 @@ int main() {
 
 
     // Bucle para enviar mensajes al servidor
-    while (true) {
+    while (true) { // Ciclo para solicitar N mensajes
         // Almacena el nombre de usuario del usuario al que desea enviar mensaje
         string receiver;
         do {

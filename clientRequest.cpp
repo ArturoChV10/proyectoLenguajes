@@ -9,6 +9,11 @@
 
 using namespace std;
 
+#define COLOR_RESET "\033[0m" //para que no salga todo de un color diferente
+#define COLOR_SENT "\033[1;32m"     // Verde brillante
+#define COLOR_RECEIVED "\033[1;33m" // Amarillo
+
+
 // Función para recibir mensajes del servidor
 void receiveMessages(int clientSocket, string registeredUserName) {
     while (true) {
@@ -31,7 +36,7 @@ void receiveMessages(int clientSocket, string registeredUserName) {
             string user = validate.substr(start + 3, (end + 1) - (start + 4));
              
             if(user == registeredUserName) {
-                cout << "\n" << buffer << endl;
+                cout << COLOR_RECEIVED << "Mensaje recibido de " << validate.substr(0, start) << ": " << validate.substr(end + 2) << COLOR_RESET << endl;
             }
         }
     }
@@ -103,7 +108,7 @@ int main() {
 
         // Almacena el mensaje que se desea enviar
         string message;
-        cout << username << ": ";
+        cout << COLOR_SENT << username << ": " << COLOR_RESET;
         getline(cin, message);
 
         // Formatear el mensaje con el nombre del usuario

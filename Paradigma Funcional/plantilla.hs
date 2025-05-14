@@ -73,7 +73,8 @@ loopGestion = do
             putStr "Nueva contraseña: "
             password <- getLine
             loopGestion
-            
+
+    -- Opción para eliminar los datos de un servicio
         "4" -> do
             putStr "Nombre del servicio a eliminar: "
             service <- getLine

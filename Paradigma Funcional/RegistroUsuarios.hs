@@ -9,8 +9,8 @@ import Data.Char
 import Data.Maybe
 
 -- Funcion que registra un usuario y lo guarda en "archivos.txt"
-registrarUsuario :: String -> IO ()
-registrarUsuario nombre = do
+registrarUsuario :: String -> String -> IO ()
+registrarUsuario nombre contraseña = do
     let archivo = "usuarios.txt"
     existe <- doesFileExist archivo
     -- doesFileExist verifica si el archivo existe
@@ -38,3 +38,5 @@ leerUsuarios archivo = do
     -- lines separa el contenido en lineas
     return $ map words lineas
     -- map words aplica la funcion words a cada linea, separando las palabras
+
+

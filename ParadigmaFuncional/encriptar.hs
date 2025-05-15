@@ -13,7 +13,7 @@ esValido :: String -> String -> FilePath -> IO Bool
 -- Recibe un usuario y contraseña y verifica si son correctos -> True: Acceso habilitado
 --                                                            -> False: Acceso inhabilitado
 esValido "" _ _ = return False --Usuario vacio
-esValido _ "" _ = return False --Contrasenna vacia
+esValido _ "" _ = return False --Contraseña vacia
 esValido _ _ "" = return False -- Archivo vacio
 esValido usuario contra archivo = do
     cuerpo <- readFile archivo

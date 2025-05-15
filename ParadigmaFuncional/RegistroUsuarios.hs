@@ -3,7 +3,7 @@
 -- Registro de usuarios
 
 import System.IO
-import System.Directory (doesFileExist)
+import System.Directory (doesFileExist) -- >> ghc -package directory RegistroUsuarios.hs --> .\RegistroUsuarios.exe
 import Data.List
 import Data.Char
 import Data.Maybe
@@ -23,11 +23,12 @@ registrarUsuario nombre contraseña = do
                 -- se utiliza una funcion lambda para comparar el nombre ingresado con el primer elemento de cada sublista
                 then putStrLn "El usuario ya existe."
                 else do
-                    appendFile archivo (nombre ++ "\n")
+                    appendFile archivo (nombre ++ " " ++ contraseña ++ "\n")
                     -- appendFile agrega el nombre al final del archivo
                     putStrLn "Usuario registrado con éxito."
     else do
-        return ()
+        writeFile archivo (nombre ++ " " ++ contraseña ++ "\n")
+        putStrLn "Usuario registrado con exito."
 
 -- Funcion que lee el archivo "usuarios.txt" y devuelve una lista de usuarios
 leerUsuarios :: FilePath -> IO [[String]]
@@ -40,3 +41,12 @@ leerUsuarios archivo = do
     -- map words aplica la funcion words a cada linea, separando las palabras
 
 
+-- main :: IO ()
+-- main = do
+--    putStrLn "Registro de usuario"
+--    putStrLn "===================="
+--    putStrLn "Ingrese el nombre de usuario:"
+--    nombre <- getLine
+--    putStrLn "Ingrese la contraseña:"
+--    contraseña <- getLine
+--    registrarUsuario nombre contraseña

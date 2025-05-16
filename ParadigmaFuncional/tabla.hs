@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use tuple-section" #-}
+{-# HLINT ignore "Redundant return" #-}
 import System.IO
 import System.Directory (doesFileExist)
 
@@ -22,38 +23,36 @@ imprimirFila (sitio, usuario, contrasena) = do
     putStrLn "------------------------------------"
 
 -- Función para el sitio web que se va a desplegar en la tabla
-sitioWeb :: IO ()
-sitioWeb = do
+sitioWebTabla :: IO String
+sitioWebTabla = do
     putStrLn "Ingrese el nombre del sitio web:"
     sitio <- getLine
-    putStrLn $ "Sitio ingresado: " ++ sitio
+    return sitio
+    -- devuelve el nombre del sitio web ingresado
 
 -- Funcion para la contraseña que se va a desplegar en la tabla
-contraseñaTabla:: IO ()
+contraseñaTabla:: IO String
 contraseñaTabla = do
     putStrLn "Ingrese el nombre de la contraseña del sitio web:"
     contraseña <- getLine
-    putStrLn $ "Sitio ingresado: " ++ contraseña
+    return contraseña
 
 -- Funcion para agregar el sitio web, el usuario y la contraseña al .txt que usa la tabla
-tablaContenido :: IO ()
-tablaContenido = do
-    nombre_usuario <- readFile "usuarios.txt"
-    let lineas = lines nombre_usuario
-        usuarios = map(head.words) lineas
-
-    sitioWeb <- contraseñaTabla
+tablaContenido :: String -> IO ()
+tablaContenido usuario = do
+    sitioWeb <- sitioWebTabla
     contraseña <- contraseñaTabla
 
     let archivo = "contenido.txt"
     existe <- doesFileExist archivo
+    let linea = sitioWeb ++ " " ++ usuario ++ " " ++ contraseña ++ "\n"
 
     if existe
         then do
-            appendFile archivo (sitioWeb ++ " " ++ usuarios ++ " " ++ contraseña ++ "\n")
+            appendFile archivo linea
             putStrLn "Contenido agregado con éxito."
         else do
-            writeFile archivo (sitioWeb ++ " " ++ usuarios ++ " " ++ contraseña ++ "\n")
+            writeFile archivo linea
             putStrLn "Contenido agregado con éxito."
 
 main :: IO ()

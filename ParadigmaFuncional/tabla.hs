@@ -59,7 +59,7 @@ main :: IO ()
 main = do
     putStrLn "Bienvenido al sistema de gestión de contraseñas"
     putStrLn "-----------------------------------------------"
-    tablaContenido
+    tablaContenido ""
     tablaSistema
     putStrLn "-----------------------------------------------"
     putStrLn "Fin del programa"

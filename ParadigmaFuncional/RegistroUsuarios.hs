@@ -69,22 +69,6 @@ leerUsuarios archivo = do
     return $ map words lineas
     -- map words aplica la funcion words a cada linea, separando las palabras
 
-login :: IO (Maybe String)
-login = do
-    putStrLn "Ingrese su nombre de usuario:"
-    nombre <- getLine
-    if nombre == "SALIR"
-        then return Nothing
-        else do
-            usuarios <- leerUsuarios "usuarios.txt"
-            -- llama a la funcion leerUsuarios para obtener la lista de usuarios y guardarla en la variable usuarios
-            if any (\u -> nombre == head u) usuarios
-                -- any verifica si el nombre ya existe en la lista de usuarios
-                -- se utiliza una funcion lambda para comparar el nombre ingresado con el primer elemento de cada sublista
-                then return (Just nombre)
-                else do
-                    putStrLn "El usuario no existe."
-                    login
 
 --main :: IO ()
 --main = do

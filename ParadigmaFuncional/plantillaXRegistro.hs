@@ -1,4 +1,4 @@
-module PlantillaXRegistro (login) where
+module PlantillaXRegistro (login, registrarUsuario) where
 
 -- Proyecto 2: Paradigma Funcional
 
@@ -47,7 +47,7 @@ registrarUsuario = do
 pedirPIN :: IO (Maybe Int)
 -- se pone maybe porque puede ser un int o cancelar el registro
 pedirPIN = do
-    putStrLn "Ingrese el PIN o escriba SALIR para cancelar el registro de usuario:"
+    putStrLn "Ingrese el PIN o escriba SALIR para cancelar la operacion:"
     pin <- getLine
     if pin == "SALIR"
         then return Nothing
@@ -98,7 +98,7 @@ login = do
                     pin <- pedirPIN
                     case pin of
                         Nothing -> do
-                            putStrLn "Se cancelo el registro del usuario."
+                            putStrLn "Se cancelo el inicio de sesion."
                             return Nothing
                         Just pin_validado -> do
                             let pin_guardado = (usuario_ingresado !! 0) !! 1
@@ -138,8 +138,8 @@ main = do
         "2" -> do
             -- login -- Por ahora no voy a implementar el login debido a que tengo que hacer validaciones de contraseña y me da pereza
             putStrLn "Ingrese su nombre de usuario:"
-            nombre <- getLine
-            loopGestion nombre
+            --nombre <- getLine
+            --loopGestion nombre
 
     -- Opcion para salir del programa
         "3" -> do
@@ -185,112 +185,112 @@ eliminarServicio username serviceName oldFile newFile = do
                 eliminarServicio username serviceName oldFile newFile
 
 
-loopGestion :: String -> IO ()
-loopGestion nombreUsuario = do
-    putStrLn "\n=== Gestión de Contraseñas ==="
-    putStrLn "Seleccione la acción a realizar"
-    putStrLn "1. Agregar cuenta"
-    putStrLn "2. Consultar cuenta"
-    putStrLn "3. Modificar cuenta"
-    putStrLn "4. Eliminar cuenta"
-    putStrLn "5. Regresar"
-    putStr "Seleccione una opción: "
-    hFlush stdout
-    opcion <- getLine
+--loopGestion :: String -> IO ()
+--loopGestion nombreUsuario = do
+--    putStrLn "\n=== Gestión de Contraseñas ==="
+--    putStrLn "Seleccione la acción a realizar"
+--    putStrLn "1. Agregar cuenta"
+--    putStrLn "2. Consultar cuenta"
+--    putStrLn "3. Modificar cuenta"
+--    putStrLn "4. Eliminar cuenta"
+--    putStrLn "5. Regresar"
+--    putStr "Seleccione una opción: "
+--    hFlush stdout
+--    opcion <- getLine
 
     -- Opcion para agregar un nuevo usuario
-    case opcion of
-        "1" -> do
-            putStrLn "Nombre del nuevo servicio: "
-            service <- getLine
-            case service of
-                "" -> do -- Podría usar _ -> do, pero esto generaba problemas con el flujo
-                    putStrLn "Ingrese un nombre de servicio válido"
-                    loopGestion nombreUsuario
-            putStrLn "Contraseña: "
-            password <- getLine
-            case password of
-                "" -> do
-                    putStrLn "Ingrese una contraseña de servicio válido"
-                    loopGestion nombreUsuario
-            archivo <- openFile "servicios.txt" AppendMode
-            agregarArchivo nombreUsuario service password archivo
-            hClose archivo
-            loopGestion nombreUsuario
+--    case opcion of
+--        "1" -> do
+--            putStrLn "Nombre del nuevo servicio: "
+--            service <- getLine
+--            case service of
+--                "" -> do -- Podría usar _ -> do, pero esto generaba problemas con el flujo
+--                    putStrLn "Ingrese un nombre de servicio válido"
+--                    loopGestion nombreUsuario
+--            putStrLn "Contraseña: "
+--            password <- getLine
+--            case password of
+--                "" -> do
+--                    putStrLn "Ingrese una contraseña de servicio válido"
+--                    loopGestion nombreUsuario
+--            archivo <- openFile "servicios.txt" AppendMode
+--            agregarArchivo nombreUsuario service password archivo
+--            hClose archivo
+--            loopGestion nombreUsuario
 
     -- Opcion para consultar servicio de usuario
-        "2" -> do
-            putStr "Nombre del servicio a consultar: "
-            nombre <- getLine
-            case nombre of
-                "" -> do
-                    putStrLn "Ingrese un nombre de servicio válido"
-                    loopGestion nombreUsuario
-            archivo <- openFile "servicios.txt" AppendMode
-            consultarServicio nombre archivo
-            hClose archivo
-            loopGestion nombreUsuario
+--        "2" -> do
+--            putStr "Nombre del servicio a consultar: "
+--            nombre <- getLine
+--            case nombre of
+--                "" -> do
+--                    putStrLn "Ingrese un nombre de servicio válido"
+--                    loopGestion nombreUsuario
+--            archivo <- openFile "servicios.txt" AppendMode
+--            consultarServicio nombre archivo
+--            hClose archivo
+--            loopGestion nombreUsuario
 
     -- Opción para modificar los datos de un servicio
-        "3" -> do
-            putStrLn "Nombre del servicio a modificar: "
-            service <- getLine
-            case service of
-                "" -> do
-                    putStrLn "Ingrese un nombre de servicio válido"
-                    loopGestion nombreUsuario
-            putStrLn "Nueva contraseña: "
-            password <- getLine
-            case password of
-                "" -> do
-                    putStrLn "Ingrese una contraseña de servicio válido"
-                    loopGestion nombreUsuario
+--        "3" -> do
+--            putStrLn "Nombre del servicio a modificar: "
+--            service <- getLine
+--            case service of
+--                "" -> do
+--                    putStrLn "Ingrese un nombre de servicio válido"
+--                    loopGestion nombreUsuario
+--            putStrLn "Nueva contraseña: "
+--            password <- getLine
+--            case password of
+--                "" -> do
+--                    putStrLn "Ingrese una contraseña de servicio válido"
+--                    loopGestion nombreUsuario
 
             -- Eliminar el servicio antiguo
-            archivoViejo <- openFile "servicios.txt" ReadMode
-            archivoNuevo <- openFile "servicios.tmp" WriteMode
-            eliminarServicio nombreUsuario service archivoViejo archivoNuevo
-            hClose archivoViejo
-            hClose archivoNuevo
+--            archivoViejo <- openFile "servicios.txt" ReadMode
+--            archivoNuevo <- openFile "servicios.tmp" WriteMode
+--            eliminarServicio nombreUsuario service archivoViejo archivoNuevo
+--            hClose archivoViejo
+--            hClose archivoNuevo
             
-            removeFile "servicios.txt"
-            renameFile "servicios.tmp" "servicios.txt"
+--            removeFile "servicios.txt"
+--            renameFile "servicios.tmp" "servicios.txt"
 
             -- Agregar el archivo nuevo
-            archivo <- openFile "servicios.txt" AppendMode
-            agregarArchivo nombreUsuario service password archivo
-            hClose archivo
+--            archivo <- openFile "servicios.txt" AppendMode
+--            agregarArchivo nombreUsuario service password archivo
+--            hClose archivo
 
-            loopGestion nombreUsuario
+--            loopGestion nombreUsuario
 
     -- Opción para eliminar los datos de un servicio
     -- De manera resumida, toma el archivo servicios.txt y guarda en servicios.tmp todas las líneas
     -- que no correspondan a la línea a eliminar, luego eliminar el archivo servicios.txt y renombra
     -- servicios.tmp como servicios.txt, para dejarlo todo normal
-        "4" -> do
-            putStrLn "Nombre del servicio a eliminar: "
-            service <- getLine
-            case service of
-                "" -> do
-                    putStrLn "Ingrese un nombre de servicio válido"
-                    loopGestion nombreUsuario
+--        "4" -> do
+--            putStrLn "Nombre del servicio a eliminar: "
+--            service <- getLine
+--            case service of
+--                "" -> do
+--                    putStrLn "Ingrese un nombre de servicio válido"
+--                    loopGestion nombreUsuario
             
-            archivoViejo <- openFile "servicios.txt" ReadMode
-            archivoNuevo <- openFile "servicios.tmp" WriteMode
-            eliminarServicio nombreUsuario service archivoViejo archivoNuevo
-            hClose archivoViejo
-            hClose archivoNuevo
+--            archivoViejo <- openFile "servicios.txt" ReadMode
+--            archivoNuevo <- openFile "servicios.tmp" WriteMode
+--            eliminarServicio nombreUsuario service archivoViejo archivoNuevo
+--            hClose archivoViejo
+--            hClose archivoNuevo
             
-            removeFile "servicios.txt"
-            renameFile "servicios.tmp" "servicios.txt"
+--            removeFile "servicios.txt"
+--            renameFile "servicios.tmp" "servicios.txt"
 
-            loopGestion nombreUsuario
+--            loopGestion nombreUsuario
 
     -- Opción para regresar al menú principal
-        "5" -> do
-            main
+--        "5" -> do
+--            main
 
-        _ -> do
-            putStrLn "Opción no válida, intente nuevamente"
-            loopGestion nombreUsuario
+--        _ -> do
+--            putStrLn "Opción no válida, intente nuevamente"
+--            loopGestion nombreUsuario
 

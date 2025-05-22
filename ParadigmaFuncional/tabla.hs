@@ -4,7 +4,7 @@
 import System.IO
 import System.Directory (doesFileExist)
 import Data.List.Split (splitOn)
-import PlantillaXRegistro (login)
+import PlantillaXRegistro (login, registrarUsuario)
 
 
 -- Función para mostrar la tabla de usuarios
@@ -23,6 +23,8 @@ tablaSistema usuario = do
                         -- Convierte cada linea en una lista de palabras
                         , let campos = splitOn ";" separar
                         -- Separa cada linea en una lista de palabras usando el separador ";"
+                        , length campos == 3
+                        -- Verifica que la longitud de la lista sea 3 (sitio, usuario, contraseña)
                         , campos !! 1 == usuario
                         -- Considera solamente la sublista con el usuario que inicio sesión
                         ]
@@ -60,7 +62,7 @@ tablaContenido usuario = do
 
     let archivo = "contenido.txt"
     existe <- doesFileExist archivo
-    let linea = sitioWeb ++ ";" ++ usuario ++ ";" ++ contraseña ++ "\n"
+    let linea = (sitioWeb ++ ";" ++ usuario ++ ";" ++ contraseña ++ "\n")
 
     if existe
         then do
@@ -77,8 +79,9 @@ menuUsuario usuario = do
     putStrLn "\nSeleccione una opción:\n"
     putStrLn "\n 1. Ver sitios y contraseñas\n"
     putStrLn "\n2. Agregar un nuevo sitio con su contraseña\n"
-    putStrLn "\n3. Cerrar sesión\n"
-    putStrLn "\n4. Salir\n"
+    putStrLn "\n3. Registrar un nuevo usuario\n"
+    putStrLn "\n4. Cerrar sesión\n"
+    putStrLn "\n5. Salir\n"
     putStrLn "-----------------------------------------------"
     putStr "Ingrese su opción: "
     hFlush stdout
@@ -91,9 +94,16 @@ menuUsuario usuario = do
             tablaContenido usuario
             menuUsuario usuario
         "3" -> do
+            putStrLn "-----------------------------------------------"
+            putStrLn "Registro de nuevo usuario"
+            putStrLn "-----------------------------------------------"
+            registrarUsuario
+            putStrLn "-----------------------------------------------"
+            menuUsuario usuario
+        "4" -> do
             putStrLn "Cerrando sesión..."
             main
-        "4" -> do
+        "5" -> do
             putStrLn "Saliendo del programa..."
             return ()
         _ -> do

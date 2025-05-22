@@ -1,29 +1,43 @@
-import Data.Hashable
+import Data.Bits (xor)
+import Data.Char (chr, ord)
+import Numeric (showHex, readHex)
+import Text.Printf (printf)
 
-encriptar :: String -> String
---retorna el string hasheado
-encriptar msj = show (hash msj) 
+-- Encripta con XOR y lo convierte a hexadecimal
+encriptar :: String -> Int -> String
+encriptar texto pin = concatMap (\c -> printf "%02x" (ord c `xor` pin)) texto
+
+-- Desencripta de hexadecimal
+desencriptar :: String -> Int -> String
+desencriptar [] _ = []
+desencriptar (a:b:resto) pin =
+    let [(valor, _)] = readHex [a,b]
+    in chr (valor `xor` pin) : desencriptar resto pin
 
 separar :: String -> (String, String)
 --Separa el string cuando encuentra un ;
 separar xs = let (a, b) = break (== ';') xs
                 in (a, drop 1 b)
 
-esValido :: String -> String -> FilePath -> IO Bool
+esValido :: String -> String -> Int -> FilePath -> IO Bool
 -- Recibe un usuario y contraseña y verifica si son correctos -> True: Acceso habilitado
 --                                                            -> False: Acceso inhabilitado
-esValido "" _ _ = return False --Usuario vacio
-esValido _ "" _ = return False --Contraseña vacia
-esValido _ _ "" = return False -- Archivo vacio
-esValido usuario contra archivo = do
+esValido "" _ _ _ = return False --Usuario vacio
+esValido _ "" _ _= return False --Contraseña vacia
+esValido _ _ 0 _= return False -- Pin vacio
+esValido _ _ _ "" = return False --Ruta vacia
+esValido usuario contra pin archivo = do
     cuerpo <- readFile archivo
     let lineas = lines cuerpo
         lista = map separar lineas
-        uHash = encriptar usuario
-        cHash = encriptar contra
+        uHash = encriptar usuario pin
+        cHash = encriptar contra pin
     return $ any (\(u, c) -> u == uHash && c == cHash) lista
 
 --Ejemplos de como usar las funciones                           
---  print (encriptar "Hola")
---  valido <- esValido "Hola" "Hola" "usuarios.txt"
---  print valido
+-- main :: IO()
+-- main = do
+--     print (encriptar "Hola" 123)
+--     valido <- esValido "Hola" "Hola" 123 "usuarios.txt"
+--     print valido
+--     print (desencriptar "3314171a" 123 )

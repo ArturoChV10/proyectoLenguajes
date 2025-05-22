@@ -1,3 +1,5 @@
+module PlantillaXRegistro (login) where
+
 -- Proyecto 2: Paradigma Funcional
 
 -- Registro de usuarios
@@ -6,6 +8,7 @@ import System.IO
 import System.Directory (doesFileExist, removeFile, renameFile) -- >> ghc -package directory RegistroUsuarios.hs --> .\RegistroUsuarios.exe
 import Text.Read (readMaybe)
 import Data.List (isInfixOf)
+
 
 -- Funcion que registra un usuario y lo guarda en "archivos.txt"
 registrarUsuario :: IO ()
@@ -88,13 +91,31 @@ login = do
         else do
             usuarios <- leerUsuarios "usuarios.txt"
             -- llama a la funcion leerUsuarios para obtener la lista de usuarios y guardarla en la variable usuarios
-            if any (\u -> nombre == head u) usuarios
-                -- any verifica si el nombre ya existe en la lista de usuarios
+            let usuario_ingresado = filter (\u -> nombre == head u) usuarios
                 -- se utiliza una funcion lambda para comparar el nombre ingresado con el primer elemento de cada sublista
-                then return (Just nombre)
+            if not (null usuario_ingresado)
+                then do
+                    pin <- pedirPIN
+                    case pin of
+                        Nothing -> do
+                            putStrLn "Se cancelo el registro del usuario."
+                            return Nothing
+                        Just pin_validado -> do
+                            let pin_guardado = (usuario_ingresado !! 0) !! 1
+                                -- se obtiene el segundo elemento de la sublista que contiene el nombre y el PIN
+                                -- !! 0 obtiene la primera sublista y !! 1 obtiene el segundo elemento de esa sublista
+                            if show pin_validado == pin_guardado
+                                -- si el PIN ingresado es igual al guardado, se devuelve el nombre de usuario
+                                then do
+                                    putStrLn "Usuario ingresado con éxito."
+                                    return (Just nombre)
+                                else do
+                                    putStrLn "PIN incorrecto. Intente nuevamente."
+                                    login
                 else do
                     putStrLn "El usuario no existe."
                     login
+
 
 main :: IO ()
 main = do

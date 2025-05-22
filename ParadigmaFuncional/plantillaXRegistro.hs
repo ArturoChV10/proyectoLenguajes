@@ -1,4 +1,4 @@
-module PlantillaXRegistro (login, registrarUsuario) where
+module PlantillaXRegistro (login, registrarUsuario, agregarArchivo, eliminarServicio, consultarServicio) where
 
 -- Proyecto 2: Paradigma Funcional
 
@@ -8,6 +8,7 @@ import System.IO
 import System.Directory (doesFileExist, removeFile, renameFile) -- >> ghc -package directory RegistroUsuarios.hs --> .\RegistroUsuarios.exe
 import Text.Read (readMaybe)
 import Data.List (isInfixOf)
+import Data.List.Split (splitOn)
 
 
 -- Funcion que registra un usuario y lo guarda en "archivos.txt"
@@ -153,10 +154,10 @@ main = do
 
 agregarArchivo :: String -> String -> String -> Handle -> IO ()
 agregarArchivo username serviceName password archivo = do
-  hPutStrLn archivo (username ++ ";" ++ serviceName ++ ";" ++ password)
+  hPutStrLn archivo (serviceName ++ ";" ++ username ++ ";" ++ password)
 
-consultarServicio :: String -> Handle -> IO ()
-consultarServicio name archivo = do
+consultarServicio :: String -> String -> Handle -> IO ()
+consultarServicio username serviceName archivo = do
     completo <- hIsEOF archivo
     if completo
         then do
@@ -164,11 +165,15 @@ consultarServicio name archivo = do
             return ()
         else do
             linea <- hGetLine archivo
-            if name `isInfixOf` linea -- name está en linea
+            let campos = splitOn ";" linea
+            let coincide = case campos of
+                            (servicio:usuario:_) -> usuario == username && servicio == serviceName
+                            _ -> False
+            if coincide
                 then do
                     putStrLn linea
                     return ()
-                else consultarServicio name archivo
+                else consultarServicio username serviceName archivo
 
 eliminarServicio :: String -> String -> Handle -> Handle -> IO ()
 eliminarServicio username serviceName oldFile newFile = do
@@ -177,7 +182,10 @@ eliminarServicio username serviceName oldFile newFile = do
     then return ()
     else do
         linea <- hGetLine oldFile
-        let coincide = serviceName `isInfixOf` linea && username `isInfixOf` linea
+        let campos = splitOn ";" linea
+        let coincide = case campos of
+                         (servicio:usuario:_) -> usuario == username && servicio == serviceName
+                         _ -> False
         if coincide
             then eliminarServicio username serviceName oldFile newFile
             else do

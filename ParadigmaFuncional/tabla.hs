@@ -2,9 +2,9 @@
 {-# HLINT ignore "Use tuple-section" #-}
 {-# HLINT ignore "Redundant return" #-}
 import System.IO
-import System.Directory (doesFileExist)
+import System.Directory (doesFileExist, removeFile, renameFile)
 import Data.List.Split (splitOn)
-import PlantillaXRegistro (login, registrarUsuario)
+import PlantillaXRegistro (login, registrarUsuario, agregarArchivo, eliminarServicio, consultarServicio)
 
 
 -- Función para mostrar la tabla de usuarios
@@ -72,16 +72,85 @@ tablaContenido usuario = do
             writeFile archivo linea
             putStrLn "Contenido agregado con éxito."
 
+modificarContenido :: String -> IO()
+modificarContenido nombreUsuario = do
+    putStrLn "Nombre del servicio a modificar: "
+    service <- getLine
+    if null service
+        then do
+            putStrLn "Ingrese un nombre de servicio válido"
+            menuUsuario nombreUsuario
+        else do 
+            putStrLn "Nueva contraseña: "
+            password <- getLine
+            if null password
+                then do
+                    putStrLn "Ingrese una contraseña de servicio válido"
+                    menuUsuario nombreUsuario
+                else do
+                    -- Eliminar el servicio antiguo
+                    archivoViejo <- openFile "contenido.txt" ReadMode
+                    archivoNuevo <- openFile "contenido.tmp" WriteMode
+                    eliminarServicio nombreUsuario service archivoViejo archivoNuevo
+                    hClose archivoViejo
+                    hClose archivoNuevo
+                    
+                    removeFile "contenido.txt"
+                    renameFile "contenido.tmp" "contenido.txt"
+
+                    -- Agregar el archivo nuevo
+                    archivo <- openFile "contenido.txt" AppendMode
+                    agregarArchivo nombreUsuario service password archivo
+                    hClose archivo
+
+                    menuUsuario nombreUsuario
+
+eliminarContenido :: String -> IO ()
+eliminarContenido username = do
+    putStrLn "Nombre del servicio a eliminar: "
+    service <- getLine
+    if null service
+        then do
+            putStrLn "Ingrese un nombre de servicio válido"
+            menuUsuario username
+        else do 
+            archivoViejo <- openFile "contenido.txt" ReadMode
+            archivoNuevo <- openFile "contenido.tmp" WriteMode
+            eliminarServicio username service archivoViejo archivoNuevo
+            hClose archivoViejo
+            hClose archivoNuevo
+            
+            removeFile "contenido.txt"
+            renameFile "contenido.tmp" "contenido.txt"
+            menuUsuario username
+
+consultarContenido :: String -> IO ()
+consultarContenido username = do
+    putStrLn "Nombre del servicio a consultar: "
+    service <- getLine
+    if null service
+        then do
+            putStrLn "Ingrese un nombre de servicio válido"
+            menuUsuario username
+        else do 
+            archivo <- openFile "contenido.txt" ReadMode
+            consultarServicio username service archivo
+            hClose archivo
+            menuUsuario username
+
 menuUsuario :: String -> IO ()
 menuUsuario usuario = do
     putStrLn "-----------------------------------------------"
     putStrLn ("Bienvenido, " ++ usuario ++ "!")
     putStrLn "\nSeleccione una opción:\n"
-    putStrLn "\n 1. Ver sitios y contraseñas\n"
-    putStrLn "\n2. Agregar un nuevo sitio con su contraseña\n"
-    putStrLn "\n3. Registrar un nuevo usuario\n"
-    putStrLn "\n4. Cerrar sesión\n"
-    putStrLn "\n5. Salir\n"
+    putStrLn "1. Ver sitios y contraseñas"
+    putStrLn "2. Agregar un nuevo sitio con su contraseña"
+    putStrLn "3. Consultar un sitio especifico"
+    putStrLn "4. Modificar contraseña de un sitio"
+    putStrLn "5. Eliminar un sitio"
+    putStrLn "6. Registrar un nuevo usuario"
+    putStrLn "7. Cerrar sesión"
+    putStrLn "8. Salir"
     putStrLn "-----------------------------------------------"
     putStr "Ingrese su opción: "
     hFlush stdout
@@ -94,18 +163,26 @@ menuUsuario usuario = do
             tablaContenido usuario
             menuUsuario usuario
         "3" -> do
+            consultarContenido usuario
+            menuUsuario usuario
+        "4" -> do
+            modificarContenido usuario
+            menuUsuario usuario
+        "5" -> do
+            eliminarContenido usuario
+            menuUsuario usuario
+        "6" -> do
             putStrLn "-----------------------------------------------"
             putStrLn "Registro de nuevo usuario"
             putStrLn "-----------------------------------------------"
             registrarUsuario
             putStrLn "-----------------------------------------------"
             menuUsuario usuario
-        "4" -> do
+        "7" -> do
             putStrLn "Cerrando sesión..."
             main
-        "5" -> do
+        "8" -> do
             putStrLn "Saliendo del programa..."
-            return ()
         _ -> do
             putStrLn "Opción no válida. Intente de nuevo."
             menuUsuario usuario

@@ -3,6 +3,7 @@
 {-# HLINT ignore "Redundant return" #-}
 import System.IO
 import System.Directory (doesFileExist, removeFile, renameFile)
+import System.Exit (exitSuccess)
 import Data.List.Split (splitOn)
 import PlantillaXRegistro (login, registrarUsuario, agregarArchivo, eliminarServicio, consultarServicio)
 import Control.Exception (evaluate)
@@ -150,9 +151,8 @@ menuUsuario usuario pin = do
     putStrLn "3. Consultar un sitio especifico"
     putStrLn "4. Modificar contraseña de un sitio"
     putStrLn "5. Eliminar un sitio"
-    putStrLn "6. Registrar un nuevo usuario"
-    putStrLn "7. Cerrar sesión"
-    putStrLn "8. Salir"
+    putStrLn "6. Cerrar sesión"
+    putStrLn "7. Salir"
     putStrLn "-----------------------------------------------"
     putStr "Ingrese su opción: "
     hFlush stdout
@@ -174,17 +174,11 @@ menuUsuario usuario pin = do
             eliminarContenido usuario pin
             menuUsuario usuario pin
         "6" -> do
-            putStrLn "-----------------------------------------------"
-            putStrLn "Registro de nuevo usuario"
-            putStrLn "-----------------------------------------------"
-            registrarUsuario
-            putStrLn "-----------------------------------------------"
-            menuUsuario usuario pin
-        "7" -> do
             putStrLn "Cerrando sesión..."
             main
-        "8" -> do
+        "7" -> do
             putStrLn "Saliendo del programa..."
+            exitSuccess
         _ -> do
             putStrLn "Opción no válida. Intente de nuevo."
             menuUsuario usuario pin
@@ -193,9 +187,35 @@ main :: IO ()
 main = do
     putStrLn "Bienvenido al sistema de gestión de contraseñas"
     putStrLn "-----------------------------------------------"
-    resultado <- login
-    case resultado of
-        Nothing -> putStrLn "Usuario o contraseña incorrectos. Intente de nuevo."
-        Just (usuario, pin) -> do
-            menuUsuario usuario pin
+    putStrLn "\nSeleccione una opción:\n"
+    putStrLn "1. Iniciar sesión"
+    putStrLn "2. Registrar un nuevo usuario"
+    putStrLn "3. Salir"
+    putStrLn "-----------------------------------------------"
+    putStr "Ingrese su opción: "
+    hFlush stdout
+    opcion <- getLine
+    case opcion of
+        "1" -> do
             putStrLn "-----------------------------------------------"
+            putStrLn "Iniciar sesión"
+            putStrLn " "
+            resultado <- login
+            case resultado of
+                Just (usuario, pin) -> menuUsuario usuario pin
+                Nothing -> do
+                    putStrLn "Inicio de sesión cancelado o fallido."
+                    main
+        "2" -> do
+            putStrLn "-----------------------------------------------"
+            putStrLn "Registro de nuevo usuario"
+            putStrLn "-----------------------------------------------"
+            registrarUsuario
+            putStrLn "------------------------------------------------"
+            main
+        "3" -> do
+            putStrLn "Saliendo del programa..."
+            exitSuccess
+        _ -> do
+            putStrLn "Opción no válida. Intente de nuevo."
+            main

@@ -1,7 +1,16 @@
+module Encriptar (
+    encriptar,
+    desencriptar,
+    separar,
+    separar3,
+    esValido
+) where
+
 import Data.Bits (xor)
 import Data.Char (chr, ord)
 import Numeric (showHex, readHex)
 import Text.Printf (printf)
+import Control.Exception (evaluate)
 
 -- Encripta con XOR y lo convierte a hexadecimal
 encriptar :: String -> Int -> String
@@ -19,6 +28,13 @@ separar :: String -> (String, String)
 separar xs = let (a, b) = break (== ';') xs
                 in (a, drop 1 b)
 
+separar3 :: String -> (String, String, String)
+separar3 xs =
+    let (a, resto1) = break (== ';') xs
+        (b, resto2) = break (== ';') (drop 1 resto1)
+        c = drop 1 resto2
+    in (a, b, c)
+
 esValido :: String -> String -> Int -> FilePath -> IO Bool
 -- Recibe un usuario y contraseña y verifica si son correctos -> True: Acceso habilitado
 --                                                            -> False: Acceso inhabilitado
@@ -28,6 +44,7 @@ esValido _ _ 0 _= return False -- Pin vacio
 esValido _ _ _ "" = return False --Ruta vacia
 esValido usuario contra pin archivo = do
     cuerpo <- readFile archivo
+    evaluate (length cuerpo)
     let lineas = lines cuerpo
         lista = map separar lineas
         uHash = encriptar usuario pin

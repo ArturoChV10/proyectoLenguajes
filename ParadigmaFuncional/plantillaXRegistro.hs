@@ -7,14 +7,17 @@ module PlantillaXRegistro (login, registrarUsuario, agregarArchivo, eliminarServ
 import System.IO
 import System.Directory (doesFileExist, removeFile, renameFile) -- >> ghc -package directory RegistroUsuarios.hs --> .\RegistroUsuarios.exe
 import Text.Read (readMaybe)
-import Data.List (isInfixOf)
 import Data.List.Split (splitOn)
+import Data.List (isInfixOf)
+import Encriptar (encriptar, desencriptar, separar, separar3, esValido)
+import Control.Exception (evaluate)
 
 
 -- Funcion que registra un usuario y lo guarda en "archivos.txt"
 registrarUsuario :: IO ()
 registrarUsuario = do
     putStrLn "Ingrese el nombre de usuario:"
+    hFlush stdout
     nombre <- getLine
     if nombre == "SALIR"
         then putStrLn "Se cancelo el registro del usuario."
@@ -31,24 +34,26 @@ registrarUsuario = do
                     -- convierte el PIN a String
                     if existe
                         then do
-                            usuarios <- leerUsuarios archivo
+                            usuarios <- leerUsuarios pin_validado archivo
                             -- llama a la función leerUsuarios para obtener la lista de usuarios y guardarla en la variable usuarios
                             if any (\u -> nombre == head u) usuarios
                                 -- any verifica si el nombre ya existe en la lista de usuarios
                                 -- se utiliza una funcion lambda para comparar el nombre ingresado con el primer elemento de cada sublista
                                 then putStrLn "El usuario ya existe."
                                 else do
-                                    appendFile archivo (nombre ++ ";" ++ pin_String ++ "\n")
+                                    appendFile archivo (encriptar nombre pin_validado ++ ";" ++ encriptar pin_String pin_validado ++ "\n")
                                     -- appendFile agrega el nombre al final del archivo
                                     putStrLn "Usuario registrado con éxito."
                     else do
-                        writeFile archivo (nombre ++ ";" ++ pin_String ++ "\n")
+                        writeFile archivo (encriptar nombre pin_validado ++ ";" ++ encriptar pin_String pin_validado ++ "\n")
+                        putStrLn "Usuario registrado con éxito. \n"
 
 -- Funcion que pide el PIN al usuario y lo valida
 pedirPIN :: IO (Maybe Int)
 -- se pone maybe porque puede ser un int o cancelar el registro
 pedirPIN = do
     putStrLn "Ingrese el PIN o escriba SALIR para cancelar la operacion:"
+    hFlush stdout
     pin <- getLine
     if pin == "SALIR"
         then return Nothing
@@ -74,49 +79,67 @@ separarPorPuntoYComa (x:xs)
     resto = separarPorPuntoYComa xs
 
 -- Funcion que lee el archivo "usuarios.txt" y devuelve una lista de usuarios
-leerUsuarios :: FilePath -> IO [[String]]
-leerUsuarios archivo = do
+leerUsuarios :: Int -> FilePath -> IO [[String]]
+leerUsuarios pin archivo = do
     contenido <- readFile archivo
+    evaluate (length contenido)
     -- readFile lee el contenido del archivo y lo guarda en la variable contenido
     let lineas = lines contenido
     -- lines separa el contenido en lineas
-    return $ map separarPorPuntoYComa lineas
+    return $ map (\linea ->
+        let [u, c] = separarPorPuntoYComa linea
+        in [desencriptar u pin, desencriptar c pin]
+      ) lineas
     -- map words aplica la funcion words a cada linea, separando las palabras
 
-login :: IO (Maybe String)
+login :: IO (Maybe (String, Int))
 login = do
     putStrLn "Ingrese su nombre de usuario:"
+    hFlush stdout
     nombre <- getLine
-    if nombre == "SALIR"
-        then return Nothing
-        else do
-            usuarios <- leerUsuarios "usuarios.txt"
-            -- llama a la funcion leerUsuarios para obtener la lista de usuarios y guardarla en la variable usuarios
-            let usuario_ingresado = filter (\u -> nombre == head u) usuarios
-                -- se utiliza una funcion lambda para comparar el nombre ingresado con el primer elemento de cada sublista
-            if not (null usuario_ingresado)
-                then do
-                    pin <- pedirPIN
-                    case pin of
-                        Nothing -> do
-                            putStrLn "Se cancelo el inicio de sesion."
-                            return Nothing
-                        Just pin_validado -> do
-                            let pin_guardado = (usuario_ingresado !! 0) !! 1
-                                -- se obtiene el segundo elemento de la sublista que contiene el nombre y el PIN
-                                -- !! 0 obtiene la primera sublista y !! 1 obtiene el segundo elemento de esa sublista
-                            if show pin_validado == pin_guardado
-                                -- si el PIN ingresado es igual al guardado, se devuelve el nombre de usuario
-                                then do
-                                    putStrLn "Usuario ingresado con éxito."
-                                    return (Just nombre)
-                                else do
-                                    putStrLn "PIN incorrecto. Intente nuevamente."
-                                    login
-                else do
-                    putStrLn "El usuario no existe."
-                    login
-
+    existe <- doesFileExist "usuarios.txt"
+    if not existe
+        then do
+            putStrLn "Usuarios no encontrados, cree un nuevo usuario"
+            registrarUsuario
+            login
+            else do
+        if nombre == "SALIR"
+            then return Nothing
+            else do
+                pin <- pedirPIN
+                case pin of
+                    Nothing -> do
+                        putStrLn "Se cancelo el inicio de sesion."
+                        return Nothing
+                    Just pin_validado -> do
+                        valido <- esValido nombre (show pin_validado) pin_validado "usuarios.txt"
+                        if valido
+                            then do 
+                                return (Just (nombre, pin_validado))
+                            else do 
+                                putStrLn "Usuario o contraseña incorrecta. Intente nuevamente"
+                                login
+                        -- usuarios <- leerUsuarios pin_validado "usuarios.txt"
+                        -- -- llama a la funcion leerUsuarios para obtener la lista de usuarios y guardarla en la variable usuarios
+                        -- let usuario_ingresado = filter (\u -> nombre == head u) usuarios
+                        --     -- se utiliza una funcion lambda para comparar el nombre ingresado con el primer elemento de cada sublista
+                        -- if not (null usuario_ingresado)
+                        --     then do
+                        --         let pin_guardado = (usuario_ingresado !! 0) !! 1
+                        --             -- se obtiene el segundo elemento de la sublista que contiene el nombre y el PIN
+                        --             -- !! 0 obtiene la primera sublista y !! 1 obtiene el segundo elemento de esa sublista
+                        --         if show pin_validado == pin_guardado
+                        --             -- si el PIN ingresado es igual al guardado, se devuelve el nombre de usuario
+                        --             then do
+                        --                 putStrLn "Usuario ingresado con éxito."
+                        --                 return (Just nombre)
+                        --             else do
+                        --                 putStrLn "PIN incorrecto. Intente nuevamente."
+                        --                 login
+                        -- else do
+                        --     putStrLn "El usuario no existe."
+                        --     login
 
 main :: IO ()
 main = do
@@ -152,45 +175,44 @@ main = do
             main
 
 
-agregarArchivo :: String -> String -> String -> Handle -> IO ()
-agregarArchivo username serviceName password archivo = do
-  hPutStrLn archivo (serviceName ++ ";" ++ username ++ ";" ++ password)
+agregarArchivo :: String -> String -> String -> Handle -> Int -> IO ()
+agregarArchivo username serviceName password archivo pin = do
+  hPutStrLn archivo ((encriptar serviceName pin) ++ ";" ++ (encriptar username pin) ++ ";" ++ (encriptar password pin))
 
-consultarServicio :: String -> String -> Handle -> IO ()
-consultarServicio username serviceName archivo = do
+consultarServicio :: String -> String -> Handle -> Int -> IO ()
+consultarServicio username serviceName archivo pin = do
     completo <- hIsEOF archivo
     if completo
         then do
             putStrLn "No se encontró el servicio"
             return ()
         else do
-            linea <- hGetLine archivo
-            let campos = splitOn ";" linea
-            let coincide = case campos of
-                            (servicio:usuario:_) -> usuario == username && servicio == serviceName
-                            _ -> False
+            lineaEnc <- hGetLine archivo
+            let camposEnc = splitOn ";" lineaEnc           -- primero separar la línea en campos cifrados
+                campos = map (`desencriptar` pin) camposEnc  -- luego desencriptar cada campo
+                coincide = case campos of
+                    [servicio, usuario, _] -> usuario == username && servicio == serviceName
+                    _ -> False
             if coincide
-                then do
-                    putStrLn linea
-                    return ()
-                else consultarServicio username serviceName archivo
+                then putStrLn (unwords campos) -- o formatea la salida que quieras mostrar
+                else consultarServicio username serviceName archivo pin
 
-eliminarServicio :: String -> String -> Handle -> Handle -> IO ()
-eliminarServicio username serviceName oldFile newFile = do
+
+eliminarServicio :: String -> String -> Handle -> Handle -> Int -> IO ()
+eliminarServicio username serviceName oldFile newFile pin = do
   completo <- hIsEOF oldFile
   if completo
     then return ()
     else do
         linea <- hGetLine oldFile
-        let campos = splitOn ";" linea
-        let coincide = case campos of
-                         (servicio:usuario:_) -> usuario == username && servicio == serviceName
-                         _ -> False
-        if coincide
-            then eliminarServicio username serviceName oldFile newFile
+        let (servEnc, userEnc, passEnc) = separar3 linea
+            servicio = desencriptar servEnc pin
+            usuario  = desencriptar userEnc pin
+        if usuario == username && servicio == serviceName
+            then eliminarServicio username serviceName oldFile newFile pin
             else do
                 hPutStrLn newFile linea
-                eliminarServicio username serviceName oldFile newFile
+                eliminarServicio username serviceName oldFile newFile pin
 
 
 --loopGestion :: String -> IO ()
@@ -221,7 +243,7 @@ eliminarServicio username serviceName oldFile newFile = do
 --                "" -> do
 --                    putStrLn "Ingrese una contraseña de servicio válido"
 --                    loopGestion nombreUsuario
---            archivo <- openFile "servicios.txt" AppendMode
+--            archivo <- withFile "servicios.txt" AppendMode
 --            agregarArchivo nombreUsuario service password archivo
 --            hClose archivo
 --            loopGestion nombreUsuario
@@ -234,7 +256,7 @@ eliminarServicio username serviceName oldFile newFile = do
 --                "" -> do
 --                    putStrLn "Ingrese un nombre de servicio válido"
 --                    loopGestion nombreUsuario
---            archivo <- openFile "servicios.txt" AppendMode
+--            archivo <- withFile "servicios.txt" AppendMode
 --            consultarServicio nombre archivo
 --            hClose archivo
 --            loopGestion nombreUsuario
@@ -255,8 +277,8 @@ eliminarServicio username serviceName oldFile newFile = do
 --                    loopGestion nombreUsuario
 
             -- Eliminar el servicio antiguo
---            archivoViejo <- openFile "servicios.txt" ReadMode
---            archivoNuevo <- openFile "servicios.tmp" WriteMode
+--            archivoViejo <- withFile "servicios.txt" ReadMode
+--            archivoNuevo <- withFile "servicios.tmp" WriteMode
 --            eliminarServicio nombreUsuario service archivoViejo archivoNuevo
 --            hClose archivoViejo
 --            hClose archivoNuevo
@@ -265,7 +287,7 @@ eliminarServicio username serviceName oldFile newFile = do
 --            renameFile "servicios.tmp" "servicios.txt"
 
             -- Agregar el archivo nuevo
---            archivo <- openFile "servicios.txt" AppendMode
+--            archivo <- withFile "servicios.txt" AppendMode
 --            agregarArchivo nombreUsuario service password archivo
 --            hClose archivo
 
@@ -283,8 +305,8 @@ eliminarServicio username serviceName oldFile newFile = do
 --                    putStrLn "Ingrese un nombre de servicio válido"
 --                    loopGestion nombreUsuario
             
---            archivoViejo <- openFile "servicios.txt" ReadMode
---            archivoNuevo <- openFile "servicios.tmp" WriteMode
+--            archivoViejo <- withFile "servicios.txt" ReadMode
+--            archivoNuevo <- withFile "servicios.tmp" WriteMode
 --            eliminarServicio nombreUsuario service archivoViejo archivoNuevo
 --            hClose archivoViejo
 --            hClose archivoNuevo

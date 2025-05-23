@@ -20,9 +20,12 @@ mainLoop = do
     case opcion of
         "1" -> do
             putStr "Nombre de usuario: "
+            hFlush stdout
             username <- getLine
             putStr "Contraseña: "
+            hFlush stdout
             password <- getLine
+            
             archivo <- openFile "usuarios.txt" AppendMode
             crearArchivo username password archivo
             hClose archivo
@@ -31,8 +34,10 @@ mainLoop = do
     -- Opcion para ingresar a cuenta de usuario
         "2" -> do
             putStrLn "Nombre de usuario existente: "
+            hFlush stdout
             username <- getLine
             putStrLn "Contraseña del usuario: "
+            hFlush stdout
             password <- getLine
             loopGestion
 

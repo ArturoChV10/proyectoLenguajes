@@ -5,28 +5,30 @@ import System.IO
 import System.Directory (doesFileExist, removeFile, renameFile)
 import Data.List.Split (splitOn)
 import PlantillaXRegistro (login, registrarUsuario, agregarArchivo, eliminarServicio, consultarServicio)
-
+import Control.Exception (evaluate)
+import Encriptar (encriptar, desencriptar)
 
 -- Función para mostrar la tabla de usuarios
-tablaSistema :: String -> IO ()
-tablaSistema usuario = do
+tablaSistema :: String -> Int -> IO ()
+tablaSistema usuario pin = do
     existe <- doesFileExist "contenido.txt"
     if not existe
         then putStrLn "No hay contenido en el archivo."
         else do
             contenido <- readFile "contenido.txt"
-            let lineas = lines contenido
+            evaluate (length contenido)
+            let lineasEnc = lines contenido
+                lineas = map (\lineaEnc ->
+                                    let camposEnc = splitOn ";" lineaEnc
+                                        camposDec = map (`desencriptar` pin) camposEnc
+                                    in camposDec
+                                ) lineasEnc
             -- let lineas divide el texto del archivo en una lista
-                tabla = [ (campos !! 0, campos !! 1, campos !! 2)
-                -- Convierte cada linea en una tupla (sitio, usuario, contraseña) 0 es el sitio, 1 es el usuario y 2 es la contraseña
-                        | separar <- lineas
-                        -- Convierte cada linea en una lista de palabras
-                        , let campos = splitOn ";" separar
-                        -- Separa cada linea en una lista de palabras usando el separador ";"
+            let tabla = [ (sitio, usuarioCampo, pass)
+                        | campos <- lineas
                         , length campos == 3
-                        -- Verifica que la longitud de la lista sea 3 (sitio, usuario, contraseña)
-                        , campos !! 1 == usuario
-                        -- Considera solamente la sublista con el usuario que inicio sesión
+                        , let [sitio, usuarioCampo, pass] = campos
+                        , usuarioCampo == usuario
                         ]
             putStrLn "======== Tabla de sitios & contraseñas ========="
             putStrLn "| Sitio Web | Usuario | Contraseña |"
@@ -55,14 +57,14 @@ contraseñaTabla = do
     return contraseña
 
 -- Funcion para agregar el sitio web, el usuario y la contraseña al .txt que usa la tabla
-tablaContenido :: String -> IO ()
-tablaContenido usuario = do
+tablaContenido :: String -> Int -> IO ()
+tablaContenido usuario pin = do
     sitioWeb <- sitioWebTabla
     contraseña <- contraseñaTabla
 
     let archivo = "contenido.txt"
     existe <- doesFileExist archivo
-    let linea = (sitioWeb ++ ";" ++ usuario ++ ";" ++ contraseña ++ "\n")
+    let linea = ((encriptar sitioWeb pin)++ ";" ++ ( encriptar usuario pin) ++ ";" ++ (encriptar contraseña pin) ++ "\n")
 
     if existe
         then do
@@ -72,26 +74,26 @@ tablaContenido usuario = do
             writeFile archivo linea
             putStrLn "Contenido agregado con éxito."
 
-modificarContenido :: String -> IO()
-modificarContenido nombreUsuario = do
+modificarContenido :: String -> Int -> IO()
+modificarContenido nombreUsuario pin = do
     putStrLn "Nombre del servicio a modificar: "
     service <- getLine
     if null service
         then do
             putStrLn "Ingrese un nombre de servicio válido"
-            menuUsuario nombreUsuario
+            menuUsuario nombreUsuario pin
         else do 
             putStrLn "Nueva contraseña: "
             password <- getLine
             if null password
                 then do
                     putStrLn "Ingrese una contraseña de servicio válido"
-                    menuUsuario nombreUsuario
+                    menuUsuario nombreUsuario pin
                 else do
                     -- Eliminar el servicio antiguo
                     archivoViejo <- openFile "contenido.txt" ReadMode
                     archivoNuevo <- openFile "contenido.tmp" WriteMode
-                    eliminarServicio nombreUsuario service archivoViejo archivoNuevo
+                    eliminarServicio nombreUsuario service archivoViejo archivoNuevo pin
                     hClose archivoViejo
                     hClose archivoNuevo
                     
@@ -100,46 +102,46 @@ modificarContenido nombreUsuario = do
 
                     -- Agregar el archivo nuevo
                     archivo <- openFile "contenido.txt" AppendMode
-                    agregarArchivo nombreUsuario service password archivo
+                    agregarArchivo nombreUsuario service password archivo pin
                     hClose archivo
 
-                    menuUsuario nombreUsuario
+                    menuUsuario nombreUsuario pin
 
-eliminarContenido :: String -> IO ()
-eliminarContenido username = do
+eliminarContenido :: String -> Int -> IO ()
+eliminarContenido username pin = do
     putStrLn "Nombre del servicio a eliminar: "
     service <- getLine
     if null service
         then do
             putStrLn "Ingrese un nombre de servicio válido"
-            menuUsuario username
+            menuUsuario username pin
         else do 
             archivoViejo <- openFile "contenido.txt" ReadMode
             archivoNuevo <- openFile "contenido.tmp" WriteMode
-            eliminarServicio username service archivoViejo archivoNuevo
+            eliminarServicio username service archivoViejo archivoNuevo pin
             hClose archivoViejo
             hClose archivoNuevo
             
             removeFile "contenido.txt"
             renameFile "contenido.tmp" "contenido.txt"
-            menuUsuario username
+            menuUsuario username pin
 
-consultarContenido :: String -> IO ()
-consultarContenido username = do
+consultarContenido :: String -> Int -> IO ()
+consultarContenido username pin = do
     putStrLn "Nombre del servicio a consultar: "
     service <- getLine
     if null service
         then do
             putStrLn "Ingrese un nombre de servicio válido"
-            menuUsuario username
+            menuUsuario username pin
         else do 
             archivo <- openFile "contenido.txt" ReadMode
-            consultarServicio username service archivo
+            consultarServicio username service archivo pin
             hClose archivo
-            menuUsuario username
+            menuUsuario username pin
 
-menuUsuario :: String -> IO ()
-menuUsuario usuario = do
+menuUsuario :: String -> Int -> IO ()
+menuUsuario usuario pin = do
     putStrLn "-----------------------------------------------"
     putStrLn ("Bienvenido, " ++ usuario ++ "!")
     putStrLn "\nSeleccione una opción:\n"
@@ -157,27 +159,27 @@ menuUsuario usuario = do
     opcion <- getLine
     case opcion of
         "1" -> do
-            tablaSistema usuario
-            menuUsuario usuario
+            tablaSistema usuario pin
+            menuUsuario usuario pin
         "2" -> do
-            tablaContenido usuario
-            menuUsuario usuario
+            tablaContenido usuario pin
+            menuUsuario usuario pin
         "3" -> do
-            consultarContenido usuario
-            menuUsuario usuario
+            consultarContenido usuario pin
+            menuUsuario usuario pin
         "4" -> do
-            modificarContenido usuario
-            menuUsuario usuario
+            modificarContenido usuario pin
+            menuUsuario usuario pin
         "5" -> do
-            eliminarContenido usuario
-            menuUsuario usuario
+            eliminarContenido usuario pin
+            menuUsuario usuario pin
         "6" -> do
             putStrLn "-----------------------------------------------"
             putStrLn "Registro de nuevo usuario"
             putStrLn "-----------------------------------------------"
             registrarUsuario
             putStrLn "-----------------------------------------------"
-            menuUsuario usuario
+            menuUsuario usuario pin
         "7" -> do
             putStrLn "Cerrando sesión..."
             main
@@ -185,7 +187,7 @@ menuUsuario usuario = do
             putStrLn "Saliendo del programa..."
         _ -> do
             putStrLn "Opción no válida. Intente de nuevo."
-            menuUsuario usuario
+            menuUsuario usuario pin
 
 main :: IO ()
 main = do
@@ -194,6 +196,6 @@ main = do
     resultado <- login
     case resultado of
         Nothing -> putStrLn "Usuario o contraseña incorrectos. Intente de nuevo."
-        Just usuario -> do
-            menuUsuario usuario
+        Just (usuario, pin) -> do
+            menuUsuario usuario pin
             putStrLn "-----------------------------------------------"

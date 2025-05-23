@@ -194,18 +194,25 @@ consultarServicio username serviceName archivo pin = do
                     [servicio, usuario, _] -> usuario == username && servicio == serviceName
                     _ -> False
             if coincide
-                then putStrLn (unwords campos) -- o formatea la salida que quieras mostrar
+                then do
+                    case campos of
+                        -- Se imprime con el formato de tabla
+                        [sitio, usuario, contrasena] -> do
+                            putStrLn $ "Información de " ++ sitio
+                            putStrLn "| Sitio Web | Usuario | Contraseña |"
+                            putStrLn $ "| " ++ sitio ++ " | " ++ usuario ++ " | " ++ contrasena ++ " |"
+                            putStrLn "------------------------------------"
                 else consultarServicio username serviceName archivo pin
 
 
 eliminarServicio :: String -> String -> Handle -> Handle -> Int -> IO ()
 eliminarServicio username serviceName oldFile newFile pin = do
-  completo <- hIsEOF oldFile
+  completo <- hIsEOF oldFile -- Comprueba si oldFile llegó a su final (h is End Of File)
   if completo
     then return ()
     else do
-        linea <- hGetLine oldFile
-        let (servEnc, userEnc, passEnc) = separar3 linea
+        linea <- hGetLine oldFile -- Pone un cursor sobre la primera línea, la obtiene y pasa el cursor a la siguiente línea
+        let (servEnc, userEnc, passEnc) = separar3 linea -- separa una linea en una tupla (String, String, String) buscando ";"
             servicio = desencriptar servEnc pin
             usuario  = desencriptar userEnc pin
         if usuario == username && servicio == serviceName

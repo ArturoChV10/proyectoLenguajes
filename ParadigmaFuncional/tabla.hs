@@ -75,6 +75,11 @@ tablaContenido usuario pin = do
             writeFile archivo linea
             putStrLn "Contenido agregado con éxito."
 
+contarLineas :: FilePath -> IO Int
+contarLineas filePath = do
+        contents <- readFile filePath
+        return $ length (lines contents)
+
 modificarContenido :: String -> Int -> IO()
 modificarContenido nombreUsuario pin = do
     putStrLn "Nombre del servicio a modificar: "
@@ -91,22 +96,39 @@ modificarContenido nombreUsuario pin = do
                     putStrLn "Ingrese una contraseña de servicio válido"
                     menuUsuario nombreUsuario pin
                 else do
+                    -- Cuenta la cantidad de líneas antes de eliminar
+                    -- No sé el motivo, pero no eliminar el print, creo que 
+                    -- si no se anota el show el programa da problemas
+                    let direccion = "contenido.txt"
+                    contadorA <- contarLineas direccion
+                    print ("Codigo de ingreso: " ++ show contadorA) --NO ELIMINAR
+
                     -- Eliminar el servicio antiguo
                     archivoViejo <- openFile "contenido.txt" ReadMode
                     archivoNuevo <- openFile "contenido.tmp" WriteMode
                     eliminarServicio nombreUsuario service archivoViejo archivoNuevo pin
+
                     hClose archivoViejo
                     hClose archivoNuevo
                     
                     removeFile "contenido.txt"
                     renameFile "contenido.tmp" "contenido.txt"
 
+                    -- Cuenta después del borrado
+                    contadorB <- contarLineas direccion
+                    print ("Codigo de salida: " ++ show contadorB) --NO ELIMINAR
+
                     -- Agregar el archivo nuevo
                     archivo <- openFile "contenido.txt" AppendMode
-                    agregarArchivo nombreUsuario service password archivo pin
-                    hClose archivo
-
-                    menuUsuario nombreUsuario pin
+                    if contadorA /= contadorB -- Valida si alguna línea fue eliminada en el proceso
+                        then do 
+                            agregarArchivo nombreUsuario service password archivo pin
+                            hClose archivo
+                            menuUsuario nombreUsuario pin
+                        else do
+                            hClose archivo
+                            putStrLn "El servicio a modificar no ha sido guardado por este usuario."
+                            menuUsuario nombreUsuario pin
 
 eliminarContenido :: String -> Int -> IO ()
 eliminarContenido username pin = do

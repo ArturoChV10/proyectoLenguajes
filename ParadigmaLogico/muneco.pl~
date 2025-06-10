@@ -36,8 +36,8 @@ palabra_ingresada(Palabra) :-
 existe_letra(Letra, Palabra) :-
     atom_chars(Palabra, ListaLetras),
     (member(Letra, ListaLetras))
-    -> write('La letra '), write(Letra), write(' se encuentra en la palabra'), nl;
-       write('La letra '), write(Letra), write(' NO se encuentra en la palabra'), nl.
+    -> write('La letra '), write(Letra), write(' se encuentra en la palabra');
+       write('La letra '), write(Letra), write(' NO se encuentra en la palabra').
 
 % Ciclo principal que le pide una letra todo el rato y valida si existe
 % en la palabra

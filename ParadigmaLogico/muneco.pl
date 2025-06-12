@@ -31,24 +31,49 @@ palabra_ingresada(Palabra) :-
         palabra_ingresada(Palabra)
     ).
 
-% Valida si existe una letra en una 'lista', la cual corresponde a un
-% átomo
-existe_letra(Letra, Palabra) :-
+existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos) :-
     atom_chars(Palabra, ListaLetras),
-    (member(Letra, ListaLetras))
-    -> write('La letra '), write(Letra), write(' se encuentra en la palabra'), nl;
-       write('La letra '), write(Letra), write(' NO se encuentra en la palabra'), nl.
-
-% Ciclo principal que le pide una letra todo el rato y valida si existe
-% en la palabra
-ciclo_juego(Palabra) :-
-    write('Escoja una letra: '), nl,
-    read_line_to_string(user_input, LetraStr),
-    string_chars(LetraStr, [Letra|_]), % Tomar el primer caracter de la cadena de texto ingresada
-    (char_type(Letra, alpha) ->
-        existe_letra(Letra, Palabra), ciclo_juego(Palabra);
-        write('Por favor ingrese solo una letra.'), nl, ciclo_juego(Palabra)
+    ( member(Letra, ListaLetras) ->
+        write('La letra '),
+        write(Letra),
+        write(' se encuentra en la palabra'), nl,
+        ( member(Letra, Adivinadas) ->
+            NAdivinadas = Adivinadas  % Ya estaba
+        ;
+            append(Adivinadas, [Letra], NAdivinadas)  % Es nueva
+        ),
+        NFallos = Fallos,
+        mostrar_pista(Palabra, NAdivinadas), nl
+    ;
+        write('La letra '), write(Letra), write(' NO se encuentra en la palabra'), nl,
+        NFallos is Fallos + 1,
+        %añadir aqui para el muñequito
+        NAdivinadas = Adivinadas,
+        mostrar_pista(Palabra, NAdivinadas), nl
     ).
+
+ciclo_juego(Palabra, Adivinadas, Fallos) :-
+    atom_chars(Palabra, LetrasPalabra),
+    sort(LetrasPalabra, LetrasUnicas),
+    sort(Adivinadas, LetrasAdivinadas),
+    ( LetrasUnicas == LetrasAdivinadas ->
+        write('¡Felicidades! Adivinaste la palabra.'), nl
+    ; Fallos >= 6 ->
+        write('Has perdido. La palabra era: '), write(Palabra), nl,
+        mostrar_ahorcado
+    ;
+        write('Escoja una letra: '), nl,
+        read_line_to_string(user_input, LetraStr),
+        string_chars(LetraStr, [Letra|_]),
+        ( char_type(Letra, alpha) ->
+            existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos),
+            ciclo_juego(Palabra, NAdivinadas, NFallos)
+        ;
+            write('Por favor ingrese solo una letra.'), nl,
+            ciclo_juego(Palabra, Adivinadas, Fallos)
+        )
+    ).
+
 
 palabras_guardadas([
     ranacalva,
@@ -64,6 +89,21 @@ palabras_guardadas([
 ]).
 
 
+% mostrar_pista(Palabra, LetrasAdivinadas)
+mostrar_pista(Palabra, Letras) :-
+    string_chars(Palabra, Chars),
+    mostrar_letras(Chars, Letras).
+
+% mostrar_letras(ListaDeCaracteresDeLaPalabra, LetrasAdivinadas)
+mostrar_letras([], _).
+mostrar_letras([C|Resto], Letras) :-
+    (   memberchk(C, Letras)
+    ->  write(C)
+    ;   write('_')
+    ),
+    write(' '),
+    mostrar_letras(Resto, Letras).
+
 elegir_inicio_juego(Palabra) :-
     write('Desea jugar con una palabra aleatoria o ingresar una palabra?: '), nl,
     write('1. Palabra aleatoria'), nl,
@@ -75,7 +115,7 @@ elegir_inicio_juego(Palabra) :-
             palabra_escogida_aleatoriamente(Palabra);
 
         Opcion = "2" ->
-            palabra_ingresada(Palabra), ciclo_juego(Palabra);
+            palabra_ingresada(Palabra), ciclo_juego(Palabra, [], 0);
         write('Opcion invalida'),
         elegir_inicio_juego(Palabra)
 
@@ -84,4 +124,21 @@ elegir_inicio_juego(Palabra) :-
 jugar :-
     elegir_inicio_juego(Palabra),
     write('Comienza el juego!'), nl,
-    ciclo_juego(Palabra).
+    ciclo_juego(Palabra, [], 0).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

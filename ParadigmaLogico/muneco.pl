@@ -1,4 +1,15 @@
-mostrar_ahorcado :-
+ahorcado_linea(1, ',---+').
+ahorcado_linea(2, '|   |').
+ahorcado_linea(3, '|   o').
+ahorcado_linea(4, '|  /|\\').
+ahorcado_linea(5, '|  / \\').
+ahorcado_linea(6, '|').
+
+
+:- dynamic max_intentos/1.
+max_intentos(7).  % por defecto
+
+mostrar_ahorcado(0) :-
     write('========='), nl,
     write(',---+'), nl,
     write('|   |'), nl,
@@ -8,6 +19,29 @@ mostrar_ahorcado :-
     write('|'), nl,
     write('========='), nl.
 
+mostrar_ahorcado(Fallos) :-
+    write('========='), nl,
+    max_intentos(Max),
+    TotalLineas = 6,
+    LineasMostrar is (Fallos * TotalLineas) // Max,
+    mostrar_lineas(1, LineasMostrar),
+    mostrar_lineas_vacias(6 - LineasMostrar),
+    write('========='), nl.
+
+mostrar_lineas(N, Max) :-
+    N =< Max,
+    ahorcado_linea(N, Texto),
+    write(Texto), nl,
+    N1 is N + 1,
+    mostrar_lineas(N1, Max).
+mostrar_lineas(N, Max) :- N > Max.
+
+mostrar_lineas_vacias(0).
+mostrar_lineas_vacias(N) :-
+    N > 0,
+    write('|'), nl,
+    N1 is N - 1,
+    mostrar_lineas_vacias(N1).
 
 palabra_escogida_aleatoriamente(Palabra) :-
     palabras_guardadas(Lista_palabras),
@@ -47,8 +81,9 @@ existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos) :-
     ;
         write('La letra '), write(Letra), write(' NO se encuentra en la palabra'), nl,
         NFallos is Fallos + 1,
-        %añadir aqui para el muñequito
-        NAdivinadas = Adivinadas,
+        %aÃ±adir aqui para el muÃ±equito
+        append(Adivinadas, [Letra], NAdivinadas),
+        mostrar_ahorcado(NFallos),
         mostrar_pista(Palabra, NAdivinadas), nl
     ).
 
@@ -57,22 +92,40 @@ ciclo_juego(Palabra, Adivinadas, Fallos) :-
     sort(LetrasPalabra, LetrasUnicas),
     sort(Adivinadas, LetrasAdivinadas),
     ( LetrasUnicas == LetrasAdivinadas ->
-        write('¡Felicidades! Adivinaste la palabra.'), nl
-    ; Fallos >= 6 ->
+        write('Felicidades! Adivinaste la palabra.'), nl
+    ; max_intentos(Max),
+        Fallos >= Max ->
         write('Has perdido. La palabra era: '), write(Palabra), nl,
-        mostrar_ahorcado
+        mostrar_ahorcado(Max), nl
+
     ;
+        max_intentos(Max),
+        Restantes is Max - Fallos,
+        write('Intentos restantes: '), write(Restantes), nl,
+        write('Letras usadas: '), write(Adivinadas), nl,
         write('Escoja una letra: '), nl,
         read_line_to_string(user_input, LetraStr),
         string_chars(LetraStr, [Letra|_]),
         ( char_type(Letra, alpha) ->
-            existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos),
-            ciclo_juego(Palabra, NAdivinadas, NFallos)
+            ( member(Letra, Adivinadas) ->
+                write('Ya se intento esa letra. Intente con otra diferente.'), nl,
+                ciclo_juego(Palabra, Adivinadas, Fallos)
+            ;
+                existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos),
+                ciclo_juego(Palabra, NAdivinadas, NFallos)
+            )
         ;
             write('Por favor ingrese solo una letra.'), nl,
             ciclo_juego(Palabra, Adivinadas, Fallos)
         )
     ).
+
+configurar_intentos :-
+    write('Ingrese el numero maximo de intentos: '), nl,
+    read_line_to_string(user_input, IntentosStr),
+    number_string(N, IntentosStr),
+    retractall(max_intentos(_)),
+    assertz(max_intentos(N)).
 
 
 palabras_guardadas([
@@ -108,14 +161,20 @@ elegir_inicio_juego(Palabra) :-
     write('Desea jugar con una palabra aleatoria o ingresar una palabra?: '), nl,
     write('1. Palabra aleatoria'), nl,
     write('2. Ingresar palabra'), nl,
-    write('Seleccione una opción: '),
+    write('3. Configurar numero maximo de intentos'), nl,
+    write('Seleccione una opcion: '),
     read_line_to_string(user_input, Opcion),
     (
         Opcion = "1" ->
             palabra_escogida_aleatoriamente(Palabra);
 
         Opcion = "2" ->
-            palabra_ingresada(Palabra), ciclo_juego(Palabra, [], 0);
+            palabra_ingresada(Palabra);
+
+        Opcion = "3" ->
+            configurar_intentos,
+            elegir_inicio_juego(Palabra);
+        
         write('Opcion invalida'),
         elegir_inicio_juego(Palabra)
 
@@ -125,20 +184,3 @@ jugar :-
     elegir_inicio_juego(Palabra),
     write('Comienza el juego!'), nl,
     ciclo_juego(Palabra, [], 0).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

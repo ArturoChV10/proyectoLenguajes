@@ -81,7 +81,6 @@ existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos) :-
     ;
         write('La letra '), write(Letra), write(' NO se encuentra en la palabra'), nl,
         NFallos is Fallos + 1,
-        %aÃ±adir aqui para el muÃ±equito
         append(Adivinadas, [Letra], NAdivinadas),
         mostrar_ahorcado(NFallos),
         mostrar_pista(Palabra, NAdivinadas), nl
@@ -90,16 +89,15 @@ existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos) :-
 ciclo_juego(Palabra, Adivinadas, Fallos) :-
     atom_chars(Palabra, LetrasPalabra),
     sort(LetrasPalabra, LetrasUnicas),
-    sort(Adivinadas, LetrasAdivinadas),
-    ( LetrasUnicas == LetrasAdivinadas ->
-        write('Felicidades! Adivinaste la palabra.'), nl
-    ; max_intentos(Max),
-        Fallos >= Max ->
-        write('Has perdido. La palabra era: '), write(Palabra), nl,
-        mostrar_ahorcado(Max), nl
-
+    max_intentos(Max),
+    (
+        subset(LetrasUnicas, Adivinadas) ->
+            write('¡Felicidades! Adivinaste la palabra.'), nl, !
     ;
-        max_intentos(Max),
+        Fallos >= Max ->
+            write('Has perdido. La palabra era: '), write(Palabra), nl,
+            mostrar_ahorcado(Max), nl, !
+    ;
         Restantes is Max - Fallos,
         write('Intentos restantes: '), write(Restantes), nl,
         write('Letras usadas: '), write(Adivinadas), nl,
@@ -108,7 +106,7 @@ ciclo_juego(Palabra, Adivinadas, Fallos) :-
         string_chars(LetraStr, [Letra|_]),
         ( char_type(Letra, alpha) ->
             ( member(Letra, Adivinadas) ->
-                write('Ya se intento esa letra. Intente con otra diferente.'), nl,
+                write('Ya se intentó esa letra. Intente con otra diferente.'), nl,
                 ciclo_juego(Palabra, Adivinadas, Fallos)
             ;
                 existe_letra(Letra, Palabra, Adivinadas, NAdivinadas, Fallos, NFallos),
@@ -119,6 +117,7 @@ ciclo_juego(Palabra, Adivinadas, Fallos) :-
             ciclo_juego(Palabra, Adivinadas, Fallos)
         )
     ).
+
 
 configurar_intentos :-
     write('Ingrese el numero maximo de intentos: '), nl,
@@ -174,7 +173,7 @@ elegir_inicio_juego(Palabra) :-
         Opcion = "3" ->
             configurar_intentos,
             elegir_inicio_juego(Palabra);
-        
+
         write('Opcion invalida'),
         elegir_inicio_juego(Palabra)
 
